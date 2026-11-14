@@ -1,0 +1,12 @@
+# Made-up interview, for trying the transcript format.
+Interviewer: Thanks for joining. How did getting started go?
+Participant: Honestly the setup was confusing. I did not know which step came first.
+There were too many screens before I could do anything useful.
+Interviewer: And once you were in?
+Participant: Search is great. I can find an old interview in seconds.
+Looking up past research used to take me all morning.
+Interviewer: Anything about cost?
+Participant: Yeah. I could not work out what the paid plan would cost us.
+The pricing page never says what you get charged per seat.
+Interviewer: Anything else?
+Participant: I would love a dark theme.
