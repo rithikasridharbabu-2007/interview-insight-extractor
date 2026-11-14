@@ -55,3 +55,44 @@ def test_rejects_bad_threshold(bad):
 def test_rejects_mismatched_lengths():
     with pytest.raises(ValueError):
         find_patterns(["a", "b", "c"], vectors())
+
+
+# --- theme labels -----------------------------------------------------------
+
+from insights import label_themes
+
+BILLING = ["The pricing page confused me", "I could not find the pricing page", "Pricing page was unclear"]
+SPEED = ["The app is slow to load", "Slow to load every morning", "Reports load so slow"]
+
+
+def test_labels_use_words_that_set_a_group_apart():
+    billing, speed = label_themes([BILLING, SPEED], others=["I want dark mode"])
+    assert "pricing page" in billing and "slow" in speed and "load" in speed
+    assert "slow" not in billing and "pricing" not in speed
+    assert "dark" not in billing + speed
+
+
+def test_labels_are_short_and_skip_stop_words():
+    for label in label_themes([BILLING, SPEED]):
+        words = label.replace(",", "").split()
+        assert 1 <= len(words) <= 5
+        assert not {"the", "to", "i", "is", "was"} & set(words)
+
+
+def test_label_does_not_repeat_a_word():
+    (label,) = label_themes([["free plan limits", "the free plan", "plan limits on free"]], others=["search is fast"])
+    words = label.replace(",", "").split()
+    assert len(words) == len(set(words))
+
+
+def test_label_is_empty_when_there_are_no_usable_words():
+    assert label_themes([["a1", "a2"]], others=["b1"]) == [""]
+    assert label_themes([]) == []
+
+
+def test_find_patterns_fills_in_labels():
+    quotes = BILLING[:2] + SPEED[:2]
+    embeddings = np.array([[1.0, 0.0], [0.9, 0.1], [0.0, 1.0], [0.1, 0.9]])
+    patterns, _ = find_patterns(quotes, embeddings, threshold=0.5)
+    assert ["pricing" in p.label for p in patterns] == [True, False]
+    assert all(p.label for p in patterns)
