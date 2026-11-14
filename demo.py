@@ -1,4 +1,4 @@
-"""Command-line tool: python3 demo.py [file] [--threshold 0.35] [--output themes.md]
+"""Command-line tool: python3 demo.py [file] [--threshold 0.2] [--output themes.md]
 
 Run `python3 demo.py --help` for input formats and all options.
 """

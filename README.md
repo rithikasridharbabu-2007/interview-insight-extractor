@@ -18,21 +18,36 @@ Give it quotes as a text file, a CSV or a transcript. It turns each quote into a
 Output of `python3 demo.py` on the bundled [sample_quotes.txt](sample_quotes.txt):
 
 ```
-Analyzed 8 quotes. Found 3 patterns.
+Analyzed 8 quotes. Found 2 patterns.
 
-Pattern 1: finding old, incredibly fast (3 quotes, similarity 0.43)
+Pattern 1: free plan, pricing page (5 quotes, similarity 0.26)
+  Most typical: "The onboarding was really confusing, I didn't know where to start"
+  - The onboarding was really confusing, I didn't know where to start
+  - I gave up during setup because there were too many steps
+  - I couldn't figure out how to invite my teammates
+  - The pricing page wasn't clear, I didn't know what I'd be charged
+  - I had no idea what the free plan included
+
+Pattern 2: finding old, incredibly fast (3 quotes, similarity 0.43)
   Most typical: "I love how quickly I can find past research"
   - The search feature is incredibly fast and accurate
   - I love how quickly I can find past research
   - Finding old interviews is so much easier now
+```
 
+This shows both sides of the default threshold of 0.20. The search quotes form a clean group. The other five are one broad "getting started is confusing" group that mixes onboarding and pricing, and its label names only the pricing part. Raising the threshold splits it:
+
+```
+$ python3 demo.py --threshold 0.35
+Analyzed 8 quotes. Found 3 patterns.
+
+Pattern 1: finding old, incredibly fast (3 quotes, similarity 0.43)
+  ...
 Pattern 2: confusing, gave, onboarding (2 quotes, similarity 0.42)
-  Most typical: "The onboarding was really confusing, I didn't know where to start"
   - The onboarding was really confusing, I didn't know where to start
   - I gave up during setup because there were too many steps
 
 Pattern 3: free plan, pricing page (2 quotes, similarity 0.38)
-  Most typical: "The pricing page wasn't clear, I didn't know what I'd be charged"
   - The pricing page wasn't clear, I didn't know what I'd be charged
   - I had no idea what the free plan included
 
@@ -40,7 +55,7 @@ Not grouped (1):
   - I couldn't figure out how to invite my teammates
 ```
 
-The labels are keyword lists, not sentences. "free plan, pricing page" is a fair name for the third group; "finding old, incredibly fast" shows the weak side: in a group of two or three quotes that share few words, many terms tie and the label is a rough hint.
+The labels are keyword lists, not sentences. In a small group whose quotes share few words, many terms tie and the label is a rough hint.
 
 ## Run it
 
@@ -81,27 +96,30 @@ Error: CSV has no column 'text'. Columns found: quote, theme, note
 Output of the transcript command above on the bundled, made-up [sample_transcript.txt](sample_transcript.txt):
 
 ```
-Analyzed 9 quotes. Found 2 patterns.
+Analyzed 9 quotes. Found 3 patterns.
 
-Pattern 1: old interview, great (2 quotes, similarity 0.35)
-  Most typical: "Search is great."
+Pattern 1: old interview, past research (3 quotes, similarity 0.32)
+  Most typical: "I can find an old interview in seconds."
   - Search is great.
   - I can find an old interview in seconds.
+  - Looking up past research used to take me all morning.
 
-Pattern 2: paid plan, pricing page (2 quotes, similarity 0.39)
+Pattern 2: step came, confusing (2 quotes, similarity 0.30)
+  Most typical: "Honestly the setup was confusing."
+  - Honestly the setup was confusing.
+  - I did not know which step came first.
+
+Pattern 3: paid plan, pricing page (2 quotes, similarity 0.39)
   Most typical: "I could not work out what the paid plan would cost us."
   - I could not work out what the paid plan would cost us.
   - The pricing page never says what you get charged per seat.
 
-Not grouped (5):
-  - Honestly the setup was confusing.
-  - I did not know which step came first.
+Not grouped (2):
   - There were too many screens before I could do anything useful.
-  - Looking up past research used to take me all morning.
   - I would love a dark theme.
 ```
 
-The interviewer's four questions are gone. The result is also a fair picture of the limits: the three setup sentences and the second search sentence were not grouped at the default threshold.
+The interviewer's four questions are gone. One setup sentence ("too many screens") was still left out of the setup group.
 
 ### Export
 
@@ -117,14 +135,15 @@ python3 demo.py eval/labeled_quotes.csv --threshold 0.2 --output themes.csv
 ```markdown
 # Interview themes
 
-9 quotes, 2 themes, 5 not grouped.
+9 quotes, 3 themes, 2 not grouped.
 
-## 1. old interview, great (2 quotes)
+## 1. old interview, past research (3 quotes)
 
-**Most typical:** "Search is great."
+**Most typical:** "I can find an old interview in seconds."
 
 - Search is great.
 - I can find an old interview in seconds.
+- Looking up past research used to take me all morning.
 ```
 
 `themes.csv` from the second has one row per quote. Ungrouped quotes have an empty `theme_id` and `label`.
@@ -165,10 +184,10 @@ Output of `python3 evaluate.py` (model `all-MiniLM-L6-v2`, sentence-transformers
 | Threshold | Clusters | Ungrouped | ARI | NMI | Homogeneity | Completeness |
 |---|---|---|---|---|---|---|
 | 0.15 | 7 | 2 | 0.47 | 0.75 | 0.69 | 0.81 |
-| 0.20 | 13 | 3 | 0.39 | 0.74 | 0.80 | 0.68 |
+| 0.20 (default) | 13 | 3 | 0.39 | 0.74 | 0.80 | 0.68 |
 | 0.25 | 15 | 8 | 0.26 | 0.72 | 0.84 | 0.63 |
 | 0.30 | 15 | 13 | 0.25 | 0.74 | 0.90 | 0.63 |
-| 0.35 (default) | 11 | 26 | 0.11 | 0.73 | 0.94 | 0.59 |
+| 0.35 | 11 | 26 | 0.11 | 0.73 | 0.94 | 0.59 |
 | 0.40 | 8 | 32 | 0.07 | 0.72 | 0.94 | 0.58 |
 | 0.45 | 5 | 39 | 0.03 | 0.72 | 0.96 | 0.57 |
 | 0.50 | 1 | 47 | -0.00 | 0.72 | 0.99 | 0.57 |
@@ -179,10 +198,10 @@ ARI (Adjusted Rand Index) is 1 for a perfect match and about 0 for a random one.
 
 What the table says:
 
-- **Agreement with the hand labels is modest.** The best ARI is 0.47, at the lowest threshold tried, and it is 0.11 at the default.
-- **The default of 0.35 is cautious.** The groups it makes are nearly pure (homogeneity 0.94), but it leaves 26 of 49 quotes ungrouped and makes only groups of two or three, so a theme is split up or mostly left out. Lower thresholds group more and mix more: at 0.20 one cluster of eight holds six onboarding quotes and two support quotes.
+- **Agreement with the hand labels is modest.** The best ARI is 0.47, at the lowest threshold tried, and it is 0.39 at the default of 0.20.
+- **The threshold trades coverage for purity.** At 0.35 the groups are nearly pure (homogeneity 0.94), but 26 of 49 quotes stay ungrouped and only groups of two or three form. At 0.20 only 3 quotes stay ungrouped, and groups mix more: one cluster of eight holds six onboarding quotes and two support quotes.
 - **NMI is not informative on this set.** It is 0.73 when nothing is grouped at all (threshold 0.60), because 49 clusters of one are trivially pure. Use ARI and the ungrouped count to compare rows.
-- **The default was not tuned on this set**, and was left at 0.35 after seeing these numbers. This set suggests that 0.15 to 0.25 suits short quotes with broad themes, but choosing the default from the one set it is scored on would say little about other data. Try a few thresholds on your own quotes.
+- **The default of 0.20 was chosen on this set.** It was 0.35 before this evaluation and was lowered after seeing the table, so the 0.20 row is not a held-out result and says little about other data. Try a few thresholds on your own quotes: lower for short quotes with broad themes, higher when you want tight groups.
 
 ## Tests
 
@@ -196,7 +215,7 @@ pytest
 ## Limits
 
 - Evaluated only on the synthetic set above, not on real interview transcripts.
-- One threshold for everything, and the default leaves many short quotes ungrouped. Long or multi-topic quotes will group poorly.
+- One threshold for everything. The default of 0.20 groups most short quotes but can merge neighbouring themes (see the example at the top). Long or multi-topic quotes will group poorly.
 - Transcript sentences are split on `.`, `!` and `?`, so abbreviations such as "e.g." split early, and a sentence that only makes sense next to its neighbour loses that context. Speaker names must match `Name:` at the start of a line; timestamps before the name are not handled.
 - Labels are keyword lists from TF-IDF. They are rough for groups of two or three quotes.
 - A quote is assigned to one theme only, even if it touches two.

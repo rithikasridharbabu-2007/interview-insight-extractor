@@ -15,7 +15,7 @@ from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS, TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 DEFAULT_MODEL = "all-MiniLM-L6-v2"
-DEFAULT_THRESHOLD = 0.35
+DEFAULT_THRESHOLD = 0.20
 
 # scikit-learn's English list, plus spoken-interview filler it does not cover.
 STOP_WORDS = ENGLISH_STOP_WORDS | frozenset(
